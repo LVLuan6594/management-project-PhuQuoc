@@ -13,6 +13,8 @@ interface Message {
   followUps?: string[]
 }
 
+import { mockProjects } from "@/lib/mock-projects"
+
 interface ChatbotAssistantProps {
   onNavigateToProject: (projectId: number) => void
 }
@@ -32,13 +34,13 @@ export default function ChatbotAssistant({ onNavigateToProject }: ChatbotAssista
   const [inputValue, setInputValue] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const projectDatabase = [
-    { id: 1, name: "Dự án Cảng", code: "PQ001", status: "Đang thực hiện", progress: 65 },
-    { id: 2, name: "Dự án Sân bay", code: "PQ002", status: "Đang thực hiện", progress: 45 },
-    { id: 3, name: "Dự án Khách sạn", code: "PQ003", status: "Hoàn thành", progress: 100 },
-    { id: 4, name: "Dự án Đường cao tốc", code: "PQ004", status: "Chuẩn bị", progress: 20 },
-    { id: 5, name: "Dự án Khu công nghiệp", code: "PQ005", status: "Đang thực hiện", progress: 55 },
-  ]
+  const projectDatabase = mockProjects.map((p) => ({
+    id: p.id,
+    name: p.name,
+    code: p.code,
+    status: p.status,
+    progress: p.progress,
+  }))
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })

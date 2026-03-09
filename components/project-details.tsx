@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useMemo, useState, useEffect } from "react"
 import {
   ArrowLeft,
   FileText,
@@ -28,21 +28,21 @@ import {
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useSubProcess } from "@/hooks/use-subprocess"
+import { getProjectById, Project } from "@/lib/mock-projects"
 
-// Mock project data
-const mockProjectDetails = {
-  id: 1,
-  name: "Dự án Cảng Phú Quốc",
-  code: "PQ-001",
-  status: "Đang triển khai",
-  progress: 65,
-  location: "Phú Quốc",
-  investor: "Bộ Giao thông",
-  startDate: "2024-01-15",
-  endDate: "2025-12-31",
-  description: "Dự án xây dựng cảng biển hiện đại tại Phú Quốc",
-  budget: "5,000 tỷ đồng",
-  contractor: "Công ty Xây dựng ABC",
+const defaultProjectDetails: Project = {
+  id: 0,
+  name: "Dự án chưa chọn",
+  code: "N/A",
+  status: "Đang cập nhật",
+  progress: 0,
+  location: "Chưa xác định",
+  investor: "Chưa xác định",
+  startDate: "",
+  endDate: "",
+  description: "Chọn dự án để xem thông tin chi tiết.",
+  budget: "",
+  contractor: "",
 }
 
 // Document folders structure
@@ -114,22 +114,38 @@ const documentFolders = [
 // Generate 16 default workflow stages
 const generateDefaultWorkflowStages = () => {
   const stageNames = [
-    "Khảo sát & Quy hoạch",
-    "Thiết kế kỹ thuật",
-    "Chuẩn bị thi công",
-    "Cơ sở hạ tầng",
-    "Xây dựng công trình chính",
-    "Hệ thống cơ học",
-    "Hệ thống điện",
-    "Hệ thống nước",
-    "Lắp đặt thiết bị",
-    "Kiểm tra chất lượng",
-    "Thử nghiệm hệ thống",
-    "Huấn luyện vận hành",
-    "Bàn giao tài liệu",
-    "Bảo trì & Bảo dưỡng",
-    "Giám sát sau chuyên giao",
-    "Hoàn thiện & Kết thúc"
+    //Bước 1
+    "Xây dựng kế hoạch thu hồi đất",
+    //Bước 2
+    "Tổ chức họp với người có đất trong khu vực thu hồi",
+    //Bước 3
+    "Thông báo thu hồi đất và gửi Thông báo thu hồi đất",
+    //Bước 4 
+    "Vận động, thuyết phục để thực hiện kiểm đếm trong 15 ngày",
+    //Bước 5
+    "Lập phương án bồi thường, hỗ trợ, tái định cư",
+    //Bước 6
+    "Niêm yết công khai phương án bồi thường, hỗ trợ, tái định cư",
+    //Bước 7 
+    "Lấy ý kiến về phương án bồi thường, hỗ trợ, tái định cư",
+    //Bước 8
+    "Thẩm định phương án bồi thường, hỗ trợ, tái định cư",
+    //Bước 9
+    "Quyết định phê duyệt phương án bồi thường, hỗ trợ, tái định cư",
+    //Bước 10
+    "Phổ biến, niêm yết công khai quyết định phê duyệt phương án bồi thường, hỗ trợ, tái định c",
+      //Bước 11
+    "Gửi phương án bồi thường, hỗ trợ, tái định cư",
+    //Bước 12
+    "Thực hiện bồi thường, hỗ trợ, bố trí tái định cư",
+    //Bước 13
+    "Chủ tịch UBND cấp xã ban hành quyết định thu hồi đất theo quy định",
+    //Bước 14
+    "Giải quyết trường hợp người có đất thu hồi, chủ sở hữu tài sản gắn liền với đất không đồng ý hoặc không phối hợp thực hiện phương án bồi thường, hỗ trợ, tái định cư đã phê duyệt",
+    //Bước 15
+    "Giải quyết trường hợp người có đất thu hồi, chủ sở hữu tài sản gắn liền với đất, người có quyền lợi và nghĩa vụ liên quan không bàn giao đất cho đơn vị, tổ chức thực hiện nhiệm vụ bồi thường, hỗ trợ, tái định cư",
+    //Bước 16
+    "Quản lý đất đã được thu hồi"
   ]
 
   const subProcessesByStage = {
@@ -280,6 +296,8 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
     description: "",
   })
 
+  const project = useMemo(() => getProjectById(projectId) ?? defaultProjectDetails, [projectId])
+
   // Use custom hook for sub-process management
   const {
     subProcesses,
@@ -392,24 +410,24 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
     }
   }
 
-  const handleDeleteStage = (id: number) => {
-    if (confirm("Bạn có chắc chắn muốn xóa tiến trình này? Tất cả quy trình con và tài liệu liên quan sẽ bị xóa.")) {
-      setStages(stages.filter((s) => s.id !== id))
-      setSubProcesses((prev) => {
-        const newSubProcesses = { ...prev }
-        delete newSubProcesses[id]
-        return newSubProcesses
-      })
-      setStageDocuments((prev) => {
-        const newDocs = { ...prev }
-        delete newDocs[id]
-        return newDocs
-      })
-      if (expandedStage === id) {
-        setExpandedStage(null)
-      }
-    }
-  }
+  // const handleDeleteStage = (id: number) => {
+  //   if (confirm("Bạn có chắc chắn muốn xóa tiến trình này? Tất cả quy trình con và tài liệu liên quan sẽ bị xóa.")) {
+  //     setStages(stages.filter((s) => s.id !== id))
+  //     setSubProcesses((prev) => {
+  //       const newSubProcesses = { ...prev }
+  //       delete newSubProcesses[id]
+  //       return newSubProcesses
+  //     })
+  //     setStageDocuments((prev) => {
+  //       const newDocs = { ...prev }
+  //       delete newDocs[id]
+  //       return newDocs
+  //     })
+  //     if (expandedStage === id) {
+  //       setExpandedStage(null)
+  //     }
+  //   }
+  // }
 
   const openEditStageDialog = (stage: any) => {
     setEditingStageId(stage.id)
@@ -457,8 +475,8 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
             </Button>
           )}
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">{mockProjectDetails.name}</h1>
-            <p className="text-muted-foreground">Mã dự án: {mockProjectDetails.code}</p>
+            <h1 className="text-3xl font-bold text-foreground mb-2">{project.name}</h1>
+            <p className="text-muted-foreground">Mã dự án: {project.code}</p>
           </div>
         </div>
       </div>
@@ -468,25 +486,25 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
         <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <p className="text-xs text-muted-foreground mb-1">Trạng thái</p>
-            <p className="text-lg font-semibold text-primary">{mockProjectDetails.status}</p>
+            <p className="text-lg font-semibold text-primary">{project.status}</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <p className="text-xs text-muted-foreground mb-1">Tiến độ</p>
-            <p className="text-lg font-semibold text-accent">{mockProjectDetails.progress}%</p>
+            <p className="text-lg font-semibold text-accent">{project.progress}%</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <p className="text-xs text-muted-foreground mb-1">Chủ đầu tư</p>
-            <p className="text-sm font-semibold text-foreground">{mockProjectDetails.investor}</p>
+            <p className="text-sm font-semibold text-foreground">{project.investor}</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <p className="text-xs text-muted-foreground mb-1">Ngân sách</p>
-            <p className="text-sm font-semibold text-foreground">{mockProjectDetails.budget}</p>
+            <p className="text-sm font-semibold text-foreground">{project.budget}</p>
           </CardContent>
         </Card>
       </div>
@@ -500,19 +518,19 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Mô tả</p>
-              <p className="text-foreground">{mockProjectDetails.description}</p>
+              <p className="text-foreground">{project.description}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-1">Nhà thầu</p>
-              <p className="text-foreground">{mockProjectDetails.contractor}</p>
+              <p className="text-foreground">{project.contractor}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-1">Ngày bắt đầu</p>
-              <p className="text-foreground">{mockProjectDetails.startDate}</p>
+              <p className="text-foreground">{project.startDate}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-1">Dự kiến kết thúc</p>
-              <p className="text-foreground">{mockProjectDetails.endDate}</p>
+              <p className="text-foreground">{project.endDate}</p>
             </div>
           </div>
         </CardContent>
@@ -520,9 +538,10 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
 
       {/* Workflow Section */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-foreground">Tiến trình thực hiện dự án</h2>
+        <h1 className="font-bold text-foreground">16 bước thực hiện thu hồi đất phục vụ quốc phòng, an ninh, phát triển KT-XH theo Luật Đất đai 2024 và các Nghị định liên quan</h1>
+        {/* <div className="flex items-center justify-between">
           <Dialog open={isAddStageOpen} onOpenChange={setIsAddStageOpen}>
+            Mặc định chỉ có 16 bước theo quy định của Luật đất đai, tuy nhiên bạn có thể thêm các tiến trình phụ trong từng bước lớn nếu cần thiết để quản lý dự án hiệu quả hơn.
             <DialogTrigger asChild>
               <Button
                 size="sm"
@@ -576,7 +595,7 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
               </div>
             </DialogContent>
           </Dialog>
-        </div>
+        </div> */}
         <div className="space-y-3">
           {stages.map((stage, index) => (
             <Card key={stage.id} className="bg-card border-border">
@@ -627,7 +646,7 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
                       </div>
                     </div>
                     <div className="flex gap-2 flex-shrink-0">
-                      <Dialog open={isEditStageOpen && editingStageId === stage.id} onOpenChange={setIsEditStageOpen}>
+                      {/* <Dialog open={isEditStageOpen && editingStageId === stage.id} onOpenChange={setIsEditStageOpen}>
                         <DialogTrigger asChild>
                           <Button
                             variant="outline"
@@ -685,8 +704,8 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
                             </div>
                           </div>
                         </DialogContent>
-                      </Dialog>
-                      <Button
+                      </Dialog> */}
+                      {/* <Button
                         variant="outline"
                         size="icon"
                         className="border-border bg-transparent h-8 w-8 hover:bg-destructive/10"
@@ -696,14 +715,14 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
                         }}
                       >
                         <Trash2 size={14} />
-                      </Button>
+                      </Button> */}
                     </div>
-                    <ChevronRight
+                    {/* <ChevronRight
                       size={20}
                       className={`text-muted-foreground transition-transform ${
                         expandedStage === stage.id ? "rotate-90" : ""
                       }`}
-                    />
+                    /> */}
                   </div>
                 </div>
 

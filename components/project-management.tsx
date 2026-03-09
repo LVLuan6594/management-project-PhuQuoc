@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Search, Plus, Edit2, Trash2, MapPin, Calendar, Filter, X } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,64 +14,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
+import type { Project } from "@/lib/mock-projects"
+import { loadProjects, saveProjects } from "@/lib/mock-projects"
+
 interface ProjectManagementProps {
   onSelectProject?: (projectId: number) => void
 }
 
-interface Project {
-  id: number
-  name: string
-  code: string
-  status: string
-  progress: number
-  location: string
-  investor: string
-  startDate: string
-  endDate: string
-  description?: string
-  contractor?: string
-  budget?: string
-}
-
-const mockProjects: Project[] = [
-  {
-    id: 1,
-    name: "Dự án Cảng Phú Quốc",
-    code: "PQ-001",
-    status: "Đang triển khai",
-    progress: 65,
-    location: "Phú Quốc",
-    investor: "Bộ Giao thông",
-    startDate: "2024-01-15",
-    endDate: "2025-12-31",
-  },
-  {
-    id: 2,
-    name: "Dự án Sân bay Phú Quốc",
-    code: "PQ-002",
-    status: "Hoàn thành",
-    progress: 100,
-    location: "Phú Quốc",
-    investor: "Bộ Giao thông",
-    startDate: "2023-06-01",
-    endDate: "2024-06-30",
-  },
-  {
-    id: 3,
-    name: "Dự án Đường cao tốc",
-    code: "PQ-003",
-    status: "Chậm tiến độ",
-    progress: 45,
-    location: "Phú Quốc",
-    investor: "Bộ Giao thông",
-    startDate: "2024-03-01",
-    endDate: "2025-09-30",
-  },
-]
-
 export default function ProjectManagement({ onSelectProject }: ProjectManagementProps) {
   const [searchTerm, setSearchTerm] = useState("")
-  const [projects, setProjects] = useState<Project[]>(mockProjects)
+  const [projects, setProjects] = useState<Project[]>([])
   const [showFilters, setShowFilters] = useState(false)
   const [filterCode, setFilterCode] = useState("")
   const [filterStatus, setFilterStatus] = useState("")
@@ -93,6 +45,11 @@ export default function ProjectManagement({ onSelectProject }: ProjectManagement
     contractor: "",
     budget: "",
   })
+
+  // Load from persistent storage on first render
+  useEffect(() => {
+    setProjects(loadProjects())
+  }, [])
 
   const filteredProjects = projects.filter((p) => {
     const matchesSearch =
@@ -125,6 +82,15 @@ export default function ProjectManagement({ onSelectProject }: ProjectManagement
     }
   }
 
+  const handleCardClick = (projectId: number) => (event: React.MouseEvent) => {
+    const target = event.target as HTMLElement
+    // Nếu click trong vùng nút / link, không đi tới chi tiết
+    if (target.closest("button") || target.closest("a") || target.closest("[role='button']")) {
+      return
+    }
+    onSelectProject?.(projectId)
+  }
+
   const handleResetFilters = () => {
     setFilterCode("")
     setFilterStatus("")
@@ -149,7 +115,9 @@ export default function ProjectManagement({ onSelectProject }: ProjectManagement
         contractor: formData.contractor,
         budget: formData.budget,
       }
-      setProjects([...projects, newProject])
+      const next = [...projects, newProject]
+      setProjects(next)
+      saveProjects(next)
       resetForm()
       setIsAddProjectOpen(false)
     }
@@ -157,26 +125,26 @@ export default function ProjectManagement({ onSelectProject }: ProjectManagement
 
   const handleUpdateProject = () => {
     if (editingProject && formData.name && formData.code && formData.location && formData.investor) {
-      setProjects(
-        projects.map((p) =>
-          p.id === editingProject.id
-            ? {
-                ...p,
-                name: formData.name,
-                code: formData.code,
-                status: formData.status,
-                progress: formData.progress,
-                location: formData.location,
-                investor: formData.investor,
-                startDate: formData.startDate,
-                endDate: formData.endDate,
-                description: formData.description,
-                contractor: formData.contractor,
-                budget: formData.budget,
-              }
-            : p,
-        ),
+      const next = projects.map((p) =>
+        p.id === editingProject.id
+          ? {
+              ...p,
+              name: formData.name,
+              code: formData.code,
+              status: formData.status,
+              progress: formData.progress,
+              location: formData.location,
+              investor: formData.investor,
+              startDate: formData.startDate,
+              endDate: formData.endDate,
+              description: formData.description,
+              contractor: formData.contractor,
+              budget: formData.budget,
+            }
+          : p,
       )
+      setProjects(next)
+      saveProjects(next)
       resetForm()
       setEditingProject(null)
       setIsEditingOpen(false)
@@ -185,7 +153,9 @@ export default function ProjectManagement({ onSelectProject }: ProjectManagement
 
   const handleDeleteProject = (id: number) => {
     if (confirm("Bạn có chắc chắn muốn xóa dự án này?")) {
-      setProjects(projects.filter((p) => p.id !== id))
+      const next = projects.filter((p) => p.id !== id)
+      setProjects(next)
+      saveProjects(next)
     }
   }
 
@@ -481,7 +451,7 @@ export default function ProjectManagement({ onSelectProject }: ProjectManagement
             <Card
               key={project.id}
               className="bg-card border-border hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => onSelectProject?.(project.id)}
+              onClick={handleCardClick(project.id)}
             >
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between gap-4">

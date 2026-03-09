@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import {
   LayoutDashboard,
   FileText,
@@ -14,6 +14,7 @@ import {
   BarChart3,
   CheckSquare,
 } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import Dashboard from "@/components/dashboard"
 import ProjectManagement from "@/components/project-management"
@@ -27,18 +28,31 @@ import AnalyticsDashboard from "@/components/analytics-dashboard"
 import ComplianceAudit from "@/components/compliance-audit"
 import ChatbotAssistant from "@/components/chatbot-assistant"
 
-const generateDefaultWorkflowStages = () => {
-  return Array.from({ length: 16 }, (_, index) => ({
-    id: index + 1,
-    name: `Tiến trình ${index + 1}`,
-    subProcesses: [],
-  }))
+const parseIntSafe = (value: string | null) => {
+  if (!value) return null
+  const parsed = Number(value)
+  return Number.isNaN(parsed) ? null : parsed
 }
 
 export default function Home() {
-  const [activeModule, setActiveModule] = useState("dashboard")
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null)
+
+  const activeModule = useMemo(() => searchParams.get("module") ?? "dashboard", [searchParams])
+  const selectedProjectId = useMemo(
+    () => parseIntSafe(searchParams.get("projectId")),
+    [searchParams]
+  )
+
+  const setRoute = (module: string, projectId: number | null = null) => {
+    const params = new URLSearchParams()
+    params.set("module", module)
+    if (projectId !== null) params.set("projectId", String(projectId))
+
+    router.replace(`/?${params.toString()}`, { scroll: false })
+  }
 
   const modules = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -56,42 +70,39 @@ export default function Home() {
     if (selectedProjectId !== null) {
       return (
         <ProjectDetails
+          key={`project-${selectedProjectId}`}
           projectId={selectedProjectId}
-          onBack={() => {
-            setSelectedProjectId(null)
-            setActiveModule("projects")
-          }}
+          onBack={() => setRoute("projects", null)}
         />
       )
     }
 
     switch (activeModule) {
       case "dashboard":
-        return <Dashboard />
+        return <Dashboard key="dashboard" />
       case "projects":
-        return <ProjectManagement onSelectProject={setSelectedProjectId} />
+        return <ProjectManagement key="projects" onSelectProject={(id) => setRoute("projects", id)} />
       case "documents":
-        return <DocumentManagement />
+        return <DocumentManagement key="documents" />
       case "map":
-        return <GISMap onSelectProject={setSelectedProjectId} />
+        return <GISMap key="map" onSelectProject={(id) => setRoute("map", id)} />
       case "upload":
-        return <DocumentUpload />
+        return <DocumentUpload key="upload" />
       case "notifications":
-        return <NotificationsCenter />
+        return <NotificationsCenter key="notifications" />
       case "analytics":
-        return <AnalyticsDashboard />
+        return <AnalyticsDashboard key="analytics" />
       case "compliance":
-        return <ComplianceAudit />
+        return <ComplianceAudit key="compliance" />
       case "users":
-        return <UserManagement />
+        return <UserManagement key="users" />
       default:
-        return <Dashboard />
+        return <Dashboard key="dashboard" />
     }
   }
 
   const handleNavigateToProject = (projectId: number) => {
-    setSelectedProjectId(projectId)
-    setActiveModule("projects")
+    setRoute("projects", projectId)
   }
 
   return (
@@ -104,7 +115,7 @@ export default function Home() {
       >
         <div className="p-6 border-b border-sidebar-border">
           <div className="flex items-center justify-between">
-            {sidebarOpen && <h1 className="text-xl font-bold text-sidebar-primary">UBND Phú Quốc</h1>}
+            {sidebarOpen && <h1 className="text-xl font-bold text-sidebar-primary">UBND Đặc khu Phú Quốc</h1>}
             <Button
               variant="ghost"
               size="icon"
@@ -122,7 +133,7 @@ export default function Home() {
             return (
               <button
                 key={module.id}
-                onClick={() => setActiveModule(module.id)}
+                onClick={() => setRoute(module.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   activeModule === module.id
                     ? "bg-sidebar-primary text-sidebar-primary-foreground"
