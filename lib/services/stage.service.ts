@@ -6,7 +6,7 @@
  * TODO: Add authentication headers when backend is ready
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'
+import { BaseApiService } from "./base-api.service"
 
 export interface Stage {
   id: number
@@ -38,7 +38,7 @@ export interface UpdateStageRequest {
   completedDate?: string
 }
 
-class StageService {
+class StageService extends BaseApiService {
   /**
    * Get all stages for a specific project
    * @param projectId - The ID of the project
@@ -46,20 +46,7 @@ class StageService {
    */
   async getStagesByProject(projectId: number): Promise<Stage[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/projects/${projectId}/stages`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          // TODO: Add auth token when backend is ready
-          // 'Authorization': `Bearer ${token}`,
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch stages: ${response.statusText}`)
-      }
-
-      return await response.json()
+      return await this.request<Stage[]>(`/projects/${projectId}/stages`, "GET")
     } catch (error) {
       console.error('Error fetching stages:', error)
       throw error
@@ -73,20 +60,7 @@ class StageService {
    */
   async getStageById(stageId: number): Promise<Stage> {
     try {
-      const response = await fetch(`${API_BASE_URL}/stages/${stageId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          // TODO: Add auth token when backend is ready
-          // 'Authorization': `Bearer ${token}`,
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch stage: ${response.statusText}`)
-      }
-
-      return await response.json()
+      return await this.request<Stage>(`/stages/${stageId}`, "GET")
     } catch (error) {
       console.error('Error fetching stage:', error)
       throw error
@@ -100,21 +74,7 @@ class StageService {
    */
   async createStage(data: CreateStageRequest): Promise<Stage> {
     try {
-      const response = await fetch(`${API_BASE_URL}/stages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // TODO: Add auth token when backend is ready
-          // 'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to create stage: ${response.statusText}`)
-      }
-
-      return await response.json()
+      return await this.request<Stage>("/stages", "POST", data)
     } catch (error) {
       console.error('Error creating stage:', error)
       throw error
@@ -129,21 +89,7 @@ class StageService {
    */
   async updateStage(stageId: number, data: UpdateStageRequest): Promise<Stage> {
     try {
-      const response = await fetch(`${API_BASE_URL}/stages/${stageId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          // TODO: Add auth token when backend is ready
-          // 'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to update stage: ${response.statusText}`)
-      }
-
-      return await response.json()
+      return await this.request<Stage>(`/stages/${stageId}`, "PUT", data)
     } catch (error) {
       console.error('Error updating stage:', error)
       throw error
@@ -157,18 +103,7 @@ class StageService {
    */
   async deleteStage(stageId: number): Promise<void> {
     try {
-      const response = await fetch(`${API_BASE_URL}/stages/${stageId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          // TODO: Add auth token when backend is ready
-          // 'Authorization': `Bearer ${token}`,
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete stage: ${response.statusText}`)
-      }
+      await this.request<void>(`/stages/${stageId}`, "DELETE")
     } catch (error) {
       console.error('Error deleting stage:', error)
       throw error
@@ -183,21 +118,7 @@ class StageService {
    */
   async bulkUpdateStages(stageIds: number[], data: Partial<UpdateStageRequest>): Promise<Stage[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/stages/bulk-update`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          // TODO: Add auth token when backend is ready
-          // 'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ stageIds, data }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to bulk update stages: ${response.statusText}`)
-      }
-
-      return await response.json()
+      return await this.request<Stage[]>("/stages/bulk-update", "PUT", { stageIds, data })
     } catch (error) {
       console.error('Error bulk updating stages:', error)
       throw error

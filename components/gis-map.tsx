@@ -97,6 +97,14 @@ interface PopupProject {
   endDate: string
 }
 
+type VisibleLayers = {
+  projects: boolean
+  infrastructure: boolean
+  administrative: boolean
+}
+
+type LayerId = keyof VisibleLayers
+
 function MapMarker({
   project,
   isSelected,
@@ -127,7 +135,7 @@ export default function GISMap({ onSelectProject }: GISMapProps) {
   const [popupProject, setPopupProject] = useState<PopupProject | null>(null)
   const [zoom, setZoom] = useState(11)
   const [showLayerPanel, setShowLayerPanel] = useState(false)
-  const [visibleLayers, setVisibleLayers] = useState({
+  const [visibleLayers, setVisibleLayers] = useState<VisibleLayers>({
     projects: true,
     infrastructure: true,
     administrative: false,
@@ -140,7 +148,7 @@ export default function GISMap({ onSelectProject }: GISMapProps) {
     }
   }
 
-  const toggleLayer = (layerId: string) => {
+  const toggleLayer = (layerId: LayerId) => {
     setVisibleLayers((prev) => ({
       ...prev,
       [layerId]: !prev[layerId],
@@ -354,8 +362,8 @@ export default function GISMap({ onSelectProject }: GISMapProps) {
                   <div key={layer.id} className="flex items-start gap-3">
                     <Checkbox
                       id={layer.id}
-                      checked={visibleLayers[layer.id as keyof typeof visibleLayers]}
-                      onCheckedChange={() => toggleLayer(layer.id)}
+                      checked={visibleLayers[layer.id as LayerId]}
+                      onCheckedChange={() => toggleLayer(layer.id as LayerId)}
                       className="mt-1"
                     />
                     <div className="flex-1 min-w-0">

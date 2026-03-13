@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import {
   ArrowLeft,
   FileText,
@@ -27,8 +27,31 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useSubProcess } from "@/hooks/use-subprocess"
-import { getProjectById, Project } from "@/lib/mock-projects"
+import { SubProcess, useSubProcess } from "@/hooks/use-subprocess"
+import { getProjectById, mockProjects, Project } from "@/lib/mock-projects"
+
+type WorkflowStageStatus = "pending" | "in-progress" | "completed"
+
+interface StageDocument {
+  id: number
+  name: string
+  type: string
+  size: string
+  date: string
+  reviewed: boolean
+}
+
+interface WorkflowStage {
+  id: number
+  name: string
+  description: string
+  status: WorkflowStageStatus
+  progress: number
+  subProcesses: SubProcess[]
+  documents: StageDocument[]
+  completedDate?: string
+  startDate?: string
+}
 
 const defaultProjectDetails: Project = {
   id: 0,
@@ -112,7 +135,7 @@ const documentFolders = [
 ]
 
 // Generate 16 default workflow stages
-const generateDefaultWorkflowStages = () => {
+const generateDefaultWorkflowStages = (): WorkflowStage[] => {
   const stageNames = [
     //Bước 1
     "Xây dựng kế hoạch thu hồi đất",
@@ -148,91 +171,100 @@ const generateDefaultWorkflowStages = () => {
     "Quản lý đất đã được thu hồi"
   ]
 
-  const subProcessesByStage = {
+    const subProcessesByStage = {
     1: [
-      { name: "Khảo sát địa hình", content: "Thực hiện khảo sát địa hình chi tiết khu vực dự án" },
-      { name: "Lập kế hoạch tổng thể", content: "Xây dựng kế hoạch quản lý và triển khai dự án" },
-      { name: "Phân tích môi trường", content: "Đánh giá tác động môi trường của dự án" },
+      { name: "Thu thap ho so phap ly du an", content: "Tong hop QD chu truong dau tu, QD chap thuan nha dau tu, quy hoach 1/2000 va 1/500." },
+      { name: "Xac dinh pham vi thu hoi dat", content: "Xac dinh ranh gioi du an va dien tich tung thua dat bi anh huong." },
+      { name: "Lap ke hoach thu hoi dat", content: "Xac dinh thoi gian, pham vi thu hoi va du kien so ho bi anh huong." },
+      { name: "Lay y kien co quan lien quan", content: "Lay y kien UBND xa/phuong, Phong TNMT va Ban quan ly du an." },
+      { name: "Trinh phe duyet ke hoach", content: "Trinh UBND dac khu/UBND cap huyen phe duyet ke hoach thu hoi dat." },
     ],
     2: [
-      { name: "Thiết kế kiến trúc", content: "Thiết kế kiến trúc tổng thể công trình" },
-      { name: "Thiết kế kỹ thuật", content: "Thiết kế các hệ thống kỹ thuật chi tiết" },
-      { name: "Tính toán tải trọng", content: "Tính toán kỹ thuật tải trọng và độ bền" },
-      { name: "Lập dự toán", content: "Lập dự toán chi phí xây dựng" },
+      { name: "Ban hanh giay moi hop", content: "Gui giay moi den nguoi dan co dat trong du an va cac to chuc lien quan." },
+      { name: "To chuc hop cong bo chu truong", content: "Thong bao du an, cong bo quy hoach va giai thich co che boi thuong." },
+      { name: "Lap bien ban hop dan", content: "Ghi nhan day du noi dung hop va thanh phan tham du." },
+      { name: "Tong hop y kien nguoi dan", content: "Phan loai y kien dong thuan, kien nghi va khieu nai ban dau." },
+      { name: "Gui bao cao co quan chuyen mon", content: "Gui bao cao tong hop ve So Nong nghiep va Moi truong." },
     ],
     3: [
-      { name: "Chuẩn bị hiện trường", content: "Chuẩn bị và thu dọn hiện trường xây dựng" },
-      { name: "Triển khai công nhân", content: "Tuyển dụng và huấn luyện đội ngũ thi công" },
-      { name: "Chuẩn bị vật liệu", content: "Thu mua và vận chuyển vật liệu xây dựng" },
-      { name: "Lắp đặt công trình tạm", content: "Lắp đặt công trình tạm thời cần thiết" },
+      { name: "Soan thao thong bao thu hoi dat", content: "Ban boi thuong lap noi dung thong bao thu hoi dat theo ho so du an." },
+      { name: "Trinh UBND ky ban hanh", content: "UBND xem xet va ky ban hanh thong bao thu hoi dat." },
+      { name: "Cong bo thong bao", content: "Gui truc tiep ho dan va niem yet tai UBND xa, khu dan cu." },
+      { name: "Cap nhat ho so dia chinh", content: "Cap nhat thong tin thu hoi vao ho so dia chinh du an." },
     ],
     4: [
-      { name: "Đào móng", content: "Đào móng và xây dựng công trình ngầm" },
-      { name: "Xây móng cọc", content: "Xây dựng và nhấn cọc nếu cần" },
-      { name: "Thi công tường ngoài", content: "Xây tường bao bên ngoài" },
+      { name: "Thanh lap to kiem ke", content: "Ban hanh quyet dinh thanh lap to dieu tra, khao sat, do dac." },
+      { name: "Do dac hien trang dat", content: "Do dac dien tich, loai dat va vi tri tung thua dat." },
+      { name: "Kiem ke tai san tren dat", content: "Kiem ke nha, cong trinh, cay trong va vat kien truc tren dat." },
+      { name: "Lap bien ban kiem ke", content: "Lap bien ban kiem ke cho tung ho theo mau thong nhat." },
+      { name: "Xac nhan cua nguoi dan", content: "Moi nguoi dan ky xac nhan ket qua kiem ke hien trang." },
     ],
     5: [
-      { name: "Cốt thép kết cấu", content: "Gia công và lắp đặt cốt thép kết cấu" },
-      { name: "Đổ bê tông", content: "Đổ bê tông các phần kết cấu chính" },
-      { name: "Xây tường", content: "Xây các tường chia cách trong" },
-      { name: "Lắp mái", content: "Lắp đặt hệ thống mái che" },
+      { name: "Kiem tra ho so dat dai", content: "Rasoat so do va cac giay to ve quyen su dung dat." },
+      { name: "Xac minh nguon goc dat", content: "Xac dinh dat giao, dat mua ban, dat lan chiem va tinh trang phap ly." },
+      { name: "Xac dinh loai dat va thoi diem su dung", content: "Doi chieu quy dinh de xac dinh loai dat, moc su dung dat." },
+      { name: "Phan loai dieu kien boi thuong", content: "Phan nhom du dieu kien boi thuong, ho tro hoac khong boi thuong." },
     ],
     6: [
-      { name: "Lắp đặt khung sắt", content: "Lắp đặt các khung sắt và thiết bị cơ học" },
-      { name: "Cải tạo hệ thống", content: "Cải tạo hệ thống thông gió và khí hóa" },
-      { name: "Lắp đặt thiết bị hoạt động", content: "Lắp đặt các thiết bị máy móc chính" },
+      { name: "Tong hop ket qua kiem ke", content: "Tong hop du lieu kiem ke, do dac va nguon goc dat cho tung ho." },
+      { name: "Lap ho so kiem ke tung ho", content: "Lap bo ho so gom dien tich dat, tai san tren dat, nguon goc dat." },
+      { name: "Cong khai ho so cho nguoi dan", content: "Niem yet ho so de nguoi dan doi chieu va kiem tra." },
+      { name: "Chinh sua sai lech", content: "Cap nhat lai ho so neu co sai lech sau khi doi chieu." },
     ],
     7: [
-      { name: "Xác định tuyến đường", content: "Xác định tuyến đường và điểm lắp đặt" },
-      { name: "Lắp đặt cáp điện", content: "Lắp đặt các tuyến cáp điện chính" },
-      { name: "Lắp đặt tủ điện", content: "Lắp đặt tủ điện và thiết bị điều khiển" },
-      { name: "Nối kết điện", content: "Nối kết điện và kiểm tra điện áp" },
+      { name: "Xac dinh gia dat boi thuong", content: "Ap dung bang gia dat, he so va quy dinh hien hanh de tinh boi thuong." },
+      { name: "Tinh boi thuong dat va tai san", content: "Tinh tien boi thuong dat, nha, cay trong va cong trinh tren dat." },
+      { name: "Tinh cac khoan ho tro", content: "Tinh ho tro on dinh doi song, chuyen doi nghe va cac khoan khac." },
+      { name: "Xac dinh tai dinh cu", content: "Xac dinh doi tuong bo tri tai dinh cu neu du dieu kien." },
+      { name: "Lap phuong an boi thuong tong the", content: "Tong hop day du thanh phuong an boi thuong, ho tro, tai dinh cu." },
     ],
     8: [
-      { name: "Xác định tuyến ống", content: "Xác định tuyến ống nước và xử lý nước" },
-      { name: "Lắp đặt ống nước", content: "Lắp đặt hệ thống ống nước toàn bộ" },
-      { name: "Lắp đặt bơm nước", content: "Lắp đặt hệ thống bơm và lọc nước" },
-      { name: "Thử áp suất nước", content: "Thử nghiệm áp suất và chất lượng nước" },
+      { name: "To chuc hop thong bao phuong an", content: "To chuc hop de thong bao noi dung phuong an boi thuong den nguoi dan." },
+      { name: "Cong bo nguyen tac va chinh sach", content: "Cong bo nguyen tac boi thuong, gia dat va chinh sach ho tro." },
+      { name: "Lay y kien nguoi dan", content: "Tiep nhan y kien dong thuan, kien nghi va de xuat dieu chinh." },
+      { name: "Dieu chinh phuong an neu can", content: "Hoan thien phuong an tren co so y kien hop le." },
     ],
     9: [
-      { name: "Nhập kho thiết bị", content: "Tiếp nhận và kiểm tra thiết bị nhập khẩu" },
-      { name: "Lắp đặt máy móc", content: "Lắp đặt các máy móc chính theo bản vẽ" },
-      { name: "Nối kết hệ thống", content: "Nối kết các hệ thống máy móc với nhau" },
+      { name: "Lap to trinh tham dinh", content: "Ban boi thuong lap to trinh de nghi tham dinh phuong an." },
+      { name: "Hoan thien bo ho so trinh", content: "Ho so gom phuong an boi thuong, danh sach ho dan va kinh phi." },
+      { name: "Gui UBND cap co tham quyen", content: "Gui ho so den UBND dac khu/UBND cap huyen." },
+      { name: "Phoi hop co quan tham dinh", content: "Phoi hop co quan chuyen mon trong qua trinh tham dinh." },
     ],
     10: [
-      { name: "Kiểm tra kết cấu", content: "Kiểm tra chất lượng và độ bền kết cấu" },
-      { name: "Kiểm tra hệ thống", content: "Kiểm tra các hệ thống điện nước cơ khí" },
-      { name: "Kiểm tra an toàn", content: "Kiểm tra các thiết bị an toàn và phòng cháy" },
+      { name: "Ban hanh quyet dinh phe duyet", content: "UBND ban hanh quyet dinh phe duyet phuong an boi thuong (vi du QD 893)." },
+      { name: "Xac nhan tong kinh phi", content: "Chot tong kinh phi boi thuong theo ket qua tham dinh." },
+      { name: "Chot danh sach ho va muc chi tra", content: "Xac dinh danh sach ho dan va muc chi tra chi tiet." },
     ],
     11: [
-      { name: "Vận hành thử", content: "Vận hành thử các hệ thống với tải nhẹ" },
-      { name: "Vận hành tải đầy", content: "Vận hành với tải đầy độ để kiểm tra" },
-      { name: "Ghi nhận dữ liệu", content: "Ghi nhận dữ liệu vận hành và hiệu suất" },
+      { name: "Niem yet cong khai phuong an", content: "Niem yet tai UBND xa va khu dan cu theo quy dinh." },
+      { name: "Theo doi thoi gian niem yet", content: "Dam bao thoi gian cong khai thuong la 20 ngay." },
+      { name: "Tiep nhan va xu ly khieu nai", content: "Tiep nhan, tong hop va xu ly khieu nai trong thoi gian niem yet." },
     ],
     12: [
-      { name: "Huấn luyện lý thuyết", content: "Đào tạo kiến thức lý thuyết cho đội vận hành" },
-      { name: "Huấn luyện thực hành", content: "Đào tạo kỹ năng vận hành thực tế" },
-      { name: "Trao bằng chứng chỉ", content: "Cấp chứng chỉ vận hành cho nhân viên" },
+      { name: "Ban hanh thong bao chi tra", content: "Thong bao ke hoach, lich va dia diem chi tra cho tung ho dan." },
+      { name: "Chuan bi bang ke va kinh phi", content: "Lap bang ke chi tra va bo tri du kinh phi." },
+      { name: "To chuc chi tra boi thuong", content: "To chuc chi tra tai UBND xa hoac tai Ban boi thuong." },
+      { name: "Luu chung tu ky nhan", content: "Nguoi dan ky nhan tien, luu day du chung tu chi tra." },
     ],
     13: [
-      { name: "Soạn tài liệu kỹ thuật", content: "Soạn thảo tài liệu kỹ thuật hoàn thiện" },
-      { name: "Soạn hướng dẫn vận hành", content: "Lập hướng dẫn vận hành chi tiết" },
-      { name: "Giao hạn chế quyền", content: "Chuyên giao toàn bộ tài liệu cho chủ đầu tư" },
+      { name: "Rasoat dieu kien ban hanh QD thu hoi", content: "Kiem tra dieu kien sau chi tra va dieu kien tai dinh cu/cam ket cho o." },
+      { name: "Ban hanh quyet dinh thu hoi dat", content: "Sau 10 ngay ke tu khi chi tra, UBND ban hanh quyet dinh thu hoi dat." },
+      { name: "Thong bao quyet dinh den nguoi dan", content: "Gui quyet dinh thu hoi dat den cac ho co lien quan." },
     ],
     14: [
-      { name: "Lập lịch bảo dưỡng", content: "Xây dựng kế hoạch bảo dưỡng định kỳ" },
-      { name: "Bảo dưỡng định kỳ", content: "Thực hiện các công việc bảo dưỡng theo lịch" },
-      { name: "Sửa chữa sự cố", content: "Xử lý các sự cố phát sinh trong vận hành" },
+      { name: "Lap bien ban ban giao mat bang", content: "Lap bien ban ban giao dat giua cac ben co lien quan." },
+      { name: "Kiem tra thao do va di doi", content: "Kiem tra viec thao do nha, di doi tai san theo quy dinh." },
+      { name: "Xac nhan mat bang sach", content: "Xac nhan hoan tat ban giao mat bang sach." },
     ],
     15: [
-      { name: "Giám sát hiệu suất", content: "Giám sát hiệu suất vận hành sau chuyên giao" },
-      { name: "Kiểm tra tuân thủ", content: "Kiểm tra tuân thủ các quy định an toàn" },
-      { name: "Ghi nhận sự cố", content: "Ghi nhận và báo cáo các sự cố phát sinh" },
+      { name: "Tong hop ket qua chi tra", content: "Tong hop so ho da nhan tien boi thuong va ho tro." },
+      { name: "Tong hop dien tich da ban giao", content: "Cap nhat dien tich dat da thu hoi va da ban giao." },
+      { name: "Lap bao cao ket qua GPMB", content: "Lap bao cao tong hop ket qua GPMB trinh UBND dac khu." },
     ],
     16: [
-      { name: "Hoàn thành dự án", content: "Hoàn thành tất cả các công việc còn lại" },
-      { name: "Xác nhận bàn giao", content: "Xác nhận bàn giao chính thức cho chủ đầu tư" },
-      { name: "Lập báo cáo kết thúc", content: "Lập báo cáo tổng kết dự án hoàn thành" },
+      { name: "Chuyen ho so giao dat", content: "UBND chuyen ho so den So Nong nghiep va Moi truong." },
+      { name: "Thuc hien thu tuc dat dai", content: "Thuc hien giao dat, cho thue dat, chuyen muc dich su dung dat." },
+      { name: "Ban hanh quyet dinh giao dat", content: "Ban hanh quyet dinh giao dat cho nha dau tu theo tien do du an." },
     ],
   }
 
@@ -264,8 +296,6 @@ const generateDefaultWorkflowStages = () => {
   })
 }
 
-const workflowStages = generateDefaultWorkflowStages()
-
 interface ProjectDetailsProps {
   projectId?: number
   onBack?: () => void
@@ -276,18 +306,19 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [uploadFileName, setUploadFileName] = useState("")
   const [expandedStage, setExpandedStage] = useState<number | null>(null)
-  const [stages, setStages] = useState<any[]>(generateDefaultWorkflowStages())
-  const [stageDocuments, setStageDocuments] = useState<Record<number, any[]>>(
-    generateDefaultWorkflowStages().reduce(
+  const [stages, setStages] = useState<WorkflowStage[]>(() => generateDefaultWorkflowStages())
+  const [stageDocuments, setStageDocuments] = useState<Record<number, StageDocument[]>>(() => {
+    const defaultStages = generateDefaultWorkflowStages()
+    return defaultStages.reduce(
       (acc, stage) => {
         acc[stage.id] = stage.documents || []
         return acc
       },
-      {} as Record<number, any[]>,
-    ),
-  )
+      {} as Record<number, StageDocument[]>,
+    )
+  })
   const [selectedStageForUpload, setSelectedStageForUpload] = useState<number | null>(null)
-  const [documentPreview, setDocumentPreview] = useState<any>(null)
+  const [documentPreview, setDocumentPreview] = useState<StageDocument | null>(null)
   const [isAddStageOpen, setIsAddStageOpen] = useState(false)
   const [isEditStageOpen, setIsEditStageOpen] = useState(false)
   const [editingStageId, setEditingStageId] = useState<number | null>(null)
@@ -296,7 +327,10 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
     description: "",
   })
 
-  const project = useMemo(() => getProjectById(projectId) ?? defaultProjectDetails, [projectId])
+  const [project, setProject] = useState<Project>(() => {
+    if (projectId === undefined) return defaultProjectDetails
+    return mockProjects.find((p) => p.id === projectId) ?? defaultProjectDetails
+  })
 
   // Use custom hook for sub-process management
   const {
@@ -313,6 +347,7 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
     updateSubProcess,
     handleAddSubProcess: onAddSubProcess,
     initializeWithStages,
+    ensureStageSubProcesses,
   } = useSubProcess()
 
   // Initialize sub-processes when stages are loaded
@@ -320,10 +355,14 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
     initializeWithStages(stages)
   }, [])
 
+  useEffect(() => {
+    setProject(getProjectById(projectId) ?? defaultProjectDetails)
+  }, [projectId])
+
   const handleUploadDocument = () => {
     if (uploadFileName && selectedStageForUpload) {
-      const newDoc = {
-        id: Math.random(),
+      const newDoc: StageDocument = {
+        id: Date.now(),
         name: uploadFileName,
         type: uploadFileName.split(".").pop()?.toUpperCase() || "PDF",
         size: "1.2 MB",
@@ -342,7 +381,7 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
   const handleDeleteDocument = (stageId: number, docId: number) => {
     setStageDocuments((prev) => ({
       ...prev,
-      [stageId]: prev[stageId].filter((doc) => doc.id !== docId),
+      [stageId]: (prev[stageId] || []).filter((doc) => doc.id !== docId),
     }))
   }
 
@@ -360,15 +399,15 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
   const handleUpdateSubProcess = (
     stageId: number,
     subProcessId: string | number,
-    field: string,
+    field: Exclude<keyof SubProcess, "id">,
     value: string,
   ) => {
-    updateSubProcess(stageId, subProcessId, field as any, value)
+    updateSubProcess(stageId, subProcessId, field, value)
   }
 
   const handleAddStage = () => {
     if (stageForm.name) {
-      const newStage = {
+      const newStage: WorkflowStage = {
         id: Math.max(...stages.map((s) => s.id), 0) + 1,
         name: stageForm.name,
         description: stageForm.description,
@@ -378,12 +417,7 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
         documents: [],
       }
       setStages([...stages, newStage])
-      if (!subProcesses[newStage.id]) {
-        setSubProcesses((prev) => ({
-          ...prev,
-          [newStage.id]: [],
-        }))
-      }
+      ensureStageSubProcesses(newStage.id)
       if (!stageDocuments[newStage.id]) {
         setStageDocuments((prev) => ({
           ...prev,
@@ -429,7 +463,7 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
   //   }
   // }
 
-  const openEditStageDialog = (stage: any) => {
+  const openEditStageDialog = (stage: WorkflowStage) => {
     setEditingStageId(stage.id)
     setStageForm({
       name: stage.name,
@@ -1198,3 +1232,4 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
     </div>
   )
 }
+

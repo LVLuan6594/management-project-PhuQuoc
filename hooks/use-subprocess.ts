@@ -15,6 +15,8 @@ export interface SubProcessFormData {
   executionTime: string
 }
 
+type EditableSubProcessField = Exclude<keyof SubProcess, 'id'>
+
 export const useSubProcess = () => {
   const [subProcesses, setSubProcesses] = useState<Record<number, SubProcess[]>>({})
   const [selectedStageForSubProcess, setSelectedStageForSubProcess] = useState<number | null>(null)
@@ -53,7 +55,7 @@ export const useSubProcess = () => {
   }, [])
 
   const updateSubProcess = useCallback(
-    (stageId: number, subProcessId: string | number, field: keyof SubProcess, value: string) => {
+    (stageId: number, subProcessId: string | number, field: EditableSubProcessField, value: string) => {
       setSubProcesses((prev) => ({
         ...prev,
         [stageId]: prev[stageId]?.map((sp) =>
@@ -86,6 +88,16 @@ export const useSubProcess = () => {
     setSubProcesses(initialSubProcesses)
   }, [])
 
+  const ensureStageSubProcesses = useCallback((stageId: number) => {
+    setSubProcesses((prev) => {
+      if (prev[stageId]) return prev
+      return {
+        ...prev,
+        [stageId]: [],
+      }
+    })
+  }, [])
+
   return {
     subProcesses,
     selectedStageForSubProcess,
@@ -101,5 +113,6 @@ export const useSubProcess = () => {
     updateSubProcess,
     handleAddSubProcess,
     initializeWithStages,
+    ensureStageSubProcesses,
   }
 }

@@ -84,6 +84,13 @@ export default function ProjectManagement({ onSelectProject }: ProjectManagement
 
   const handleCardClick = (projectId: number) => (event: React.MouseEvent) => {
     const target = event.target as HTMLElement
+    const currentTarget = event.currentTarget as HTMLElement
+    if (!currentTarget.contains(target)) {
+      return
+    }
+    if (isAddProjectOpen || isEditingOpen) {
+      return
+    }
     // Nếu click trong vùng nút / link, không đi tới chi tiết
     if (target.closest("button") || target.closest("a") || target.closest("[role='button']")) {
       return
@@ -508,7 +515,13 @@ export default function ProjectManagement({ onSelectProject }: ProjectManagement
                   </div>
 
                   <div className="flex gap-2">
-                    <Dialog open={isEditingOpen} onOpenChange={setIsEditingOpen}>
+                    <Dialog
+                      open={isEditingOpen && editingProject?.id === project.id}
+                      onOpenChange={(open) => {
+                        setIsEditingOpen(open)
+                        if (!open) setEditingProject(null)
+                      }}
+                    >
                       <DialogTrigger asChild>
                         <Button
                           variant="outline"
