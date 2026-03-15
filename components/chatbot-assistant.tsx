@@ -40,6 +40,13 @@ export default function ChatbotAssistant({ onNavigateToProject }: ChatbotAssista
     code: p.code,
     status: p.status,
     progress: p.progress,
+    location: p.location,
+    investor: p.investor,
+    startDate: p.startDate,
+    endDate: p.endDate,
+    description: p.description,
+    budget: p.budget,
+    contractor: p.contractor,
   }))
 
   const scrollToBottom = () => {
@@ -67,12 +74,23 @@ export default function ChatbotAssistant({ onNavigateToProject }: ChatbotAssista
       )
 
       if (foundProject) {
+        const summary = `📁 Dự án: ${foundProject.name}\nMã hồ sơ: ${foundProject.code}\nTrạng thái: ${foundProject.status}\nTiến độ: ${foundProject.progress}%\nVị trí: ${foundProject.location || "-"}\nNhà đầu tư: ${foundProject.investor || "-"}`
+
         botResponse = {
           id: (Date.now() + 1).toString(),
           type: "bot",
-          text: `📁 Dự án: ${foundProject.name}\nMã hồ sơ: ${foundProject.code}\nTrạng thái: ${foundProject.status}\nTiến độ: ${foundProject.progress}%\n\nBạn muốn xem chi tiết dự án này không?`,
+          text: `${summary}\n\nBạn muốn biết thêm thông tin nào? Chọn một mục bên dưới hoặc 'Xem chi tiết' để vào trang dự án.`,
           projectLink: { projectId: foundProject.id, projectName: foundProject.name },
-          followUps: ["Hiển thị danh sách khác", "Dự án nào đang thực hiện?", "Tìm dự án PQ003"],
+          followUps: [
+            "Tiến độ",
+            "Mô tả",
+            "Vị trí",
+            "Nhà đầu tư",
+            "Nhà thầu",
+            "Ngày bắt đầu",
+            "Ngày kết thúc",
+            "Xem chi tiết",
+          ],
         }
       } else if (input.includes("danh sách") || input.includes("tất cả")) {
         const projectList = projectDatabase.map((p) => `• ${p.name} (${p.code})`).join("\n")
@@ -105,6 +123,73 @@ export default function ChatbotAssistant({ onNavigateToProject }: ChatbotAssista
     }, 1200)
   }
 
+  const handleFollowUpButton = (label: string, projectId?: number) => {
+    // If the follow-up is project-specific and we have the projectId, show that field directly
+    if (projectId) {
+      const proj = projectDatabase.find((p) => p.id === projectId)
+      if (!proj) return
+
+      const lower = label.toLowerCase()
+      if (lower.includes("tiến độ") || lower === "tiến độ") {
+        const botMsg: Message = {
+          id: (Date.now() + 2).toString(),
+          type: "bot",
+          text: `Tiến độ dự án ${proj.name}: ${proj.progress}%`,
+        }
+        setMessages((prev) => [...prev, { id: Date.now().toString(), type: "user", text: label }, botMsg])
+        return
+      }
+
+      if (lower.includes("mô tả") || lower.includes("mô tả")) {
+        const botMsg: Message = {
+          id: (Date.now() + 3).toString(),
+          type: "bot",
+          text: `${proj.description || "Không có mô tả."}`,
+        }
+        setMessages((prev) => [...prev, { id: Date.now().toString(), type: "user", text: label }, botMsg])
+        return
+      }
+
+      if (lower.includes("vị trí")) {
+        const botMsg: Message = { id: (Date.now() + 4).toString(), type: "bot", text: `Vị trí: ${proj.location || "-"}` }
+        setMessages((prev) => [...prev, { id: Date.now().toString(), type: "user", text: label }, botMsg])
+        return
+      }
+
+      if (lower.includes("nhà đầu tư")) {
+        const botMsg: Message = { id: (Date.now() + 5).toString(), type: "bot", text: `Nhà đầu tư: ${proj.investor || "-"}` }
+        setMessages((prev) => [...prev, { id: Date.now().toString(), type: "user", text: label }, botMsg])
+        return
+      }
+
+      if (lower.includes("nhà thầu")) {
+        const botMsg: Message = { id: (Date.now() + 6).toString(), type: "bot", text: `Nhà thầu: ${proj.contractor || "-"}` }
+        setMessages((prev) => [...prev, { id: Date.now().toString(), type: "user", text: label }, botMsg])
+        return
+      }
+
+      if (lower.includes("ngày bắt đầu") || lower.includes("bắt đầu")) {
+        const botMsg: Message = { id: (Date.now() + 7).toString(), type: "bot", text: `Ngày bắt đầu: ${proj.startDate || "-"}` }
+        setMessages((prev) => [...prev, { id: Date.now().toString(), type: "user", text: label }, botMsg])
+        return
+      }
+
+      if (lower.includes("ngày kết thúc") || lower.includes("kết thúc")) {
+        const botMsg: Message = { id: (Date.now() + 8).toString(), type: "bot", text: `Ngày kết thúc: ${proj.endDate || "-"}` }
+        setMessages((prev) => [...prev, { id: Date.now().toString(), type: "user", text: label }, botMsg])
+        return
+      }
+
+      if (lower.includes("xem chi tiết") || lower.includes("chi tiết")) {
+        handleProjectClick(projectId)
+        return
+      }
+    }
+
+    // fallback: send as a normal user query
+    handleSendMessage(label)
+  }
+
   const handleProjectClick = (projectId: number) => {
     onNavigateToProject(projectId)
     setIsOpen(false)
@@ -122,7 +207,7 @@ export default function ChatbotAssistant({ onNavigateToProject }: ChatbotAssista
 {/* Floating Bot Button with Animation */}
     <motion.button
       onClick={() => setIsOpen(!isOpen)}
-      className="rounded-full w-14 h-14 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white shadow-lg shadow-[0_0_15px_rgba(99,102,241,0.7)] flex items-center justify-center"
+      className="rounded-full w-14 h-14 bg-gradient-to-r from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 text-white shadow-lg shadow-[0_0_15px_rgba(99,102,241,0.7)] flex items-center justify-center"
       animate={{
         y: [0, -3, 0],
         rotate: [0, 2, -2, 0],
@@ -155,7 +240,7 @@ export default function ChatbotAssistant({ onNavigateToProject }: ChatbotAssista
             }`}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-t-xl flex justify-between items-center">
+            <div className="bg-gradient-to-r from-sky-400 to-sky-500 text-white p-4 rounded-t-xl flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <Bot size={20} />
                 <h3 className="font-semibold text-sm">Trợ lý AI Quản lý Dự án</h3>
@@ -165,7 +250,7 @@ export default function ChatbotAssistant({ onNavigateToProject }: ChatbotAssista
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="text-white hover:bg-green-700"
+                  className="text-white hover:bg-sky-600"
                 >
                   {isExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
                 </Button>
@@ -173,7 +258,7 @@ export default function ChatbotAssistant({ onNavigateToProject }: ChatbotAssista
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsOpen(false)}
-                  className="text-white hover:bg-green-700"
+                  className="text-white hover:bg-sky-600"
                 >
                   <X size={18} />
                 </Button>
@@ -193,7 +278,7 @@ export default function ChatbotAssistant({ onNavigateToProject }: ChatbotAssista
                   <div
                     className={`max-w-xs px-4 py-2 rounded-lg ${
                       message.type === "user"
-                        ? "bg-green-500 text-white rounded-br-none"
+                        ? "bg-sky-500 text-white rounded-br-none"
                         : "bg-white text-gray-800 border border-gray-200 rounded-bl-none"
                     }`}
                   >
@@ -202,7 +287,7 @@ export default function ChatbotAssistant({ onNavigateToProject }: ChatbotAssista
                     {message.projectLink && (
                       <Button
                         onClick={() => handleProjectClick(message.projectLink!.projectId)}
-                        className="mt-2 w-full bg-green-600 hover:bg-green-700 text-white text-xs h-8"
+                        className="mt-2 w-full bg-sky-500 hover:bg-sky-600 text-white text-xs h-8"
                       >
                         Xem chi tiết: {message.projectLink.projectName}
                       </Button>
@@ -245,9 +330,9 @@ export default function ChatbotAssistant({ onNavigateToProject }: ChatbotAssista
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                 placeholder="Nhập câu hỏi..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
-              <Button onClick={() => handleSendMessage()} size="icon" className="bg-green-500 hover:bg-green-600 text-white">
+              <Button onClick={() => handleSendMessage()} size="icon" className="bg-sky-500 hover:bg-sky-600 text-white">
                 <Send size={18} />
               </Button>
             </div>

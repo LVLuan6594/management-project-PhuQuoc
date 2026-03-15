@@ -4,22 +4,23 @@ import { Maximize2, ZoomIn, ZoomOut, Layers, X, ExternalLink, MapPin } from "luc
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useRouter } from "next/navigation"
 
-// Mock project locations with REAL Phu Quoc coordinates
+// Project locations based on actual data
 const projectLocations = [
   {
     id: 1,
-    name: "Dự án Cảng Phú Quốc",
+    name: "Khu đô thị hỗn hợp du lịch sinh thái Núi Ông Quán",
     code: "PQ-001",
-    lat: 10.1865,
-    lng: 103.9854,
+    lat: 10.3,
+    lng: 103.95,
     status: "Đang triển khai",
     progress: 65,
     color: "#4CAF50",
-    description: "Cảng quốc tế Phú Quốc",
-    budget: "500 tỷ đồng",
-    startDate: "2023-01-15",
-    endDate: "2025-12-31",
+    description: "Phát triển khu đô thị hỗn hợp kết hợp du lịch sinh thái tại Núi Ông Quán, bao gồm các khu lưu trú, dịch vụ sinh thái, công viên và cơ sở hạ tầng hỗ trợ du lịch bền vững.",
+    budget: "6,200 tỷ đồng",
+    startDate: "2024-01-15",
+    endDate: "2026-12-31",
   },
   {
     id: 2,
@@ -30,52 +31,24 @@ const projectLocations = [
     status: "Hoàn thành",
     progress: 100,
     color: "#2196F3",
-    description: "Sân bay quốc tế Phú Quốc",
-    budget: "1,200 tỷ đồng",
-    startDate: "2018-06-01",
-    endDate: "2024-12-15",
+    description: "Xây dựng mở rộng sân bay quốc tế Phú Quốc",
+    budget: "10,000 tỷ đồng",
+    startDate: "2023-06-01",
+    endDate: "2024-06-30",
   },
   {
     id: 3,
     name: "Dự án Đường cao tốc",
     code: "PQ-003",
-    lat: 10.15,
-    lng: 103.95,
+    lat: 10.2,
+    lng: 103.9,
     status: "Chậm tiến độ",
     progress: 45,
     color: "#FF9800",
-    description: "Đường cao tốc Phú Quốc - Kiên Giang",
-    budget: "800 tỷ đồng",
-    startDate: "2022-03-20",
-    endDate: "2025-06-30",
-  },
-  {
-    id: 4,
-    name: "Dự án Khu công nghiệp",
-    code: "PQ-004",
-    lat: 10.12,
-    lng: 103.92,
-    status: "Đang triển khai",
-    progress: 55,
-    color: "#4CAF50",
-    description: "Khu công nghiệp Phú Quốc",
-    budget: "300 tỷ đồng",
-    startDate: "2023-09-01",
-    endDate: "2025-09-01",
-  },
-  {
-    id: 5,
-    name: "Dự án Cấp nước sạch",
-    code: "PQ-005",
-    lat: 10.22,
-    lng: 103.88,
-    status: "Hoàn thành",
-    progress: 100,
-    color: "#2196F3",
-    description: "Hệ thống cấp nước sạch Phú Quốc",
-    budget: "150 tỷ đồng",
-    startDate: "2021-01-10",
-    endDate: "2024-06-30",
+    description: "Xây dựng đường cao tốc kết nối trung tâm Phú Quốc với cảng biển",
+    budget: "8,500 tỷ đồng",
+    startDate: "2024-03-01",
+    endDate: "2025-09-30",
   },
 ]
 
@@ -131,6 +104,7 @@ function MapMarker({
 }
 
 export default function GISMap({ onSelectProject }: GISMapProps) {
+  const router = useRouter()
   const [selectedProject, setSelectedProject] = useState<(typeof projectLocations)[0] | null>(null)
   const [popupProject, setPopupProject] = useState<PopupProject | null>(null)
   const [zoom, setZoom] = useState(11)
@@ -143,7 +117,7 @@ export default function GISMap({ onSelectProject }: GISMapProps) {
 
   const handleSelectProjectFromPopup = () => {
     if (popupProject) {
-      onSelectProject?.(popupProject.id)
+      router.push(`/?module=map&projectId=${popupProject.id}`)
       setPopupProject(null)
     }
   }

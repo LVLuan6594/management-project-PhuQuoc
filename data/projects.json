@@ -1,17 +1,17 @@
 [
   {
     "id": 1,
-    "name": "Dự án Cảng Phú Quốc",
+    "name": "Khu đô thị hỗn hợp du lịch sinh thái Núi Ông Quán",
     "code": "PQ-001",
     "status": "Đang triển khai",
     "progress": 65,
     "location": "Phú Quốc",
     "investor": "Bộ Giao thông",
     "startDate": "2024-01-15",
-    "endDate": "2025-12-31",
-    "description": "Dự án xây dựng cảng biển hiện đại tại Phú Quốc",
-    "budget": "5,000 tỷ đồng",
-    "contractor": "Công ty Xây dựng ABC"
+    "endDate": "2026-12-31",
+    "description": "Phát triển khu đô thị hỗn hợp kết hợp du lịch sinh thái tại Núi Ông Quán, bao gồm các khu lưu trú, dịch vụ sinh thái, công viên và cơ sở hạ tầng hỗ trợ du lịch bền vững.",
+    "budget": "6,200 tỷ đồng",
+    "contractor": "Liên danh Công ty Xây dựng ABC & Công ty Phát triển Du lịch UVW"
   },
   {
     "id": 2,
@@ -40,19 +40,5 @@
     "description": "Xây dựng đường cao tốc kết nối trung tâm Phú Quốc với cảng biển",
     "budget": "8,500 tỷ đồng",
     "contractor": "Công ty Xây dựng XYZ"
-  },
-  {
-    "id": 4,
-    "name": "Khu đô thị hỗn hợp Du lịch sinh thái Núi Ông Quán",
-    "code": "PQ-004",
-    "status": "Đang triển khai",
-    "progress": 25,
-    "location": "Khu phố 6 An Thới, Đặc khu Phú Quốc, tỉnh An Giang",
-    "investor": "UBND Đặc khu Phú Quốc",
-    "startDate": "2024-08-01",
-    "endDate": "2025-12-31",
-    "description": "Thực hiện bồi thường, hỗ trợ và tái định cư cho ông Lê Hồng Phú trong khuôn khổ dự án Khu đô thị hỗn hợp Du lịch sinh thái Núi Ông Quán.",
-    "budget": "120 tỷ đồng",
-    "contractor": "Công ty TNHH Tư vấn Xây dựng An Thới"
   }
 ]

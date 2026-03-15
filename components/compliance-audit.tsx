@@ -189,7 +189,7 @@ export default function ComplianceAudit() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
-        return <CheckCircle2 className="w-5 h-5 text-green-600" />
+        return <CheckCircle2 className="w-5 h-5 text-sky-600" />
       case "pending":
         return <Circle className="w-5 h-5 text-yellow-600" />
       case "overdue":
@@ -202,7 +202,7 @@ export default function ComplianceAudit() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "completed":
-        return <Badge className="bg-green-600">Hoàn thành</Badge>
+        return <Badge className="bg-sky-600">Hoàn thành</Badge>
       case "pending":
         return (
           <Badge variant="outline" className="border-yellow-500 text-yellow-600">
@@ -223,7 +223,7 @@ export default function ComplianceAudit() {
       case "Chỉnh sửa":
         return <Badge className="bg-purple-600">Chỉnh sửa</Badge>
       case "Phê duyệt":
-        return <Badge className="bg-green-600">Phê duyệt</Badge>
+        return <Badge className="bg-sky-600">Phê duyệt</Badge>
       case "Xóa":
         return <Badge variant="destructive">Xóa</Badge>
       default:
@@ -290,9 +290,9 @@ export default function ComplianceAudit() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Hoàn thành</p>
-                <p className="text-2xl font-bold text-green-600">{completedCount}</p>
+                <p className="text-2xl font-bold text-sky-600">{completedCount}</p>
               </div>
-              <CheckCircle2 className="w-8 h-8 text-green-600/50" />
+              <CheckCircle2 className="w-8 h-8 text-sky-600/50" />
             </div>
           </CardContent>
         </Card>
@@ -327,10 +327,10 @@ export default function ComplianceAudit() {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-2">
             <span className="font-semibold">Tỷ lệ Tuân thủ</span>
-            <span className="text-2xl font-bold text-green-600">{complianceRate}%</span>
+            <span className="text-2xl font-bold text-sky-600">{complianceRate}%</span>
           </div>
           <div className="w-full bg-secondary rounded-full h-3">
-            <div className="bg-green-600 h-3 rounded-full transition-all" style={{ width: `${complianceRate}%` }}></div>
+            <div className="bg-sky-600 h-3 rounded-full transition-all" style={{ width: `${complianceRate}%` }}></div>
           </div>
         </CardContent>
       </Card>
@@ -424,7 +424,7 @@ export default function ComplianceAudit() {
                           </div>
 
                           {item.completedDate && (
-                            <p className="text-xs text-green-600">
+                            <p className="text-xs text-sky-600">
                               Hoàn thành: {item.completedDate.toLocaleDateString("vi-VN")}
                             </p>
                           )}

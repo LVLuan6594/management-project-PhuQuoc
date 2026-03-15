@@ -284,13 +284,9 @@ const generateDefaultWorkflowStages = (): WorkflowStage[] => {
         content: sp.content,
         progressReport: "",
         executionTime: "",
-      })) as Array<{
-        id: number
-        name: string
-        content: string
-        progressReport: string
-        executionTime: string
-      }>,
+        startDate: "",
+        endDate: "",
+      })) as SubProcess[],
       documents: [],
     }
   })
@@ -1232,4 +1228,3 @@ export default function ProjectDetails({ projectId, onBack }: ProjectDetailsProp
     </div>
   )
 }
-

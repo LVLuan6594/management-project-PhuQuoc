@@ -6,6 +6,8 @@ export interface SubProcess {
   content: string
   progressReport: string
   executionTime: string
+  startDate: string
+  endDate: string
 }
 
 export interface SubProcessFormData {
@@ -13,6 +15,8 @@ export interface SubProcessFormData {
   content: string
   progressReport: string
   executionTime: string
+  startDate: string
+  endDate: string
 }
 
 type EditableSubProcessField = Exclude<keyof SubProcess, 'id'>
@@ -25,6 +29,8 @@ export const useSubProcess = () => {
     content: '',
     progressReport: '',
     executionTime: '',
+    startDate: '',
+    endDate: '',
   })
   const [isAddSubProcessOpen, setIsAddSubProcessOpen] = useState(false)
   const [expandedSubProcess, setExpandedSubProcess] = useState<string | null>(null)
@@ -75,6 +81,8 @@ export const useSubProcess = () => {
         content: '',
         progressReport: '',
         executionTime: '',
+        startDate: '',
+        endDate: '',
       })
       setIsAddSubProcessOpen(false)
     }

@@ -11,6 +11,8 @@ export interface Project {
   description?: string
   contractor?: string
   budget?: string
+  processSteps?: Array<{ step: number; title: string; status: string; notes?: string }>
+  currentStep?: number
 }
 
 import projectsData from "../data/projects.json"

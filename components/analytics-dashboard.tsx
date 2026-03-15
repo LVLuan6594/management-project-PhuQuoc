@@ -223,7 +223,7 @@ export default function AnalyticsDashboard() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "on-track":
-        return <Badge className="bg-green-600">Đúng tiến độ</Badge>
+        return <Badge className="bg-sky-600">Đúng tiến độ</Badge>
       case "at-risk":
         return <Badge variant="destructive">Có rủi ro</Badge>
       default:
@@ -257,9 +257,9 @@ export default function AnalyticsDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Đúng tiến độ</p>
-                <p className="text-2xl font-bold text-green-600">{onTrackProjects}</p>
+                <p className="text-2xl font-bold text-sky-600">{onTrackProjects}</p>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-600/50" />
+              <CheckCircle className="w-8 h-8 text-sky-600/50" />
             </div>
           </CardContent>
         </Card>

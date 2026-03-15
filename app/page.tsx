@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Navbar } from "@/components/navbar"
 import Dashboard from "@/components/dashboard"
 import ProjectManagement from "@/components/project-management"
 import DocumentManagement from "@/components/document-management"
@@ -57,12 +58,12 @@ export default function Home() {
   const modules = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "projects", label: "Quản lý Dự án", icon: FileText },
-    { id: "documents", label: "Hồ sơ & Tiến độ", icon: Map },
-    // { id: "map", label: "Bản đồ GIS", icon: MapPin },
-    { id: "upload", label: "Tải tài liệu", icon: File },
+    // { id: "documents", label: "Hồ sơ & Tiến độ", icon: Map },
+    { id: "map", label: "Bản đồ GIS", icon: MapPin },
+    // { id: "upload", label: "Tải tài liệu", icon: File },
     { id: "notifications", label: "Thông báo", icon: Bell },
     { id: "analytics", label: "Phân tích", icon: BarChart3 },
-    { id: "compliance", label: "Tuân thủ", icon: CheckSquare },
+    // { id: "compliance", label: "Tuân thủ", icon: CheckSquare },
     { id: "users", label: "Người dùng", icon: Users },
   ]
 
@@ -107,6 +108,7 @@ export default function Home() {
 
   return (
     <div className="flex h-screen bg-background">
+      <Navbar />
       {/* Sidebar */}
       <aside
         className={`${
